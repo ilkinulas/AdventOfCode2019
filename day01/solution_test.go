@@ -5,7 +5,7 @@ import (
 )
 
 func TestRequiredFuel(t *testing.T) {
-	tests := [] struct {
+	tests := []struct {
 		mass int
 		fuel int
 	}{
@@ -23,7 +23,7 @@ func TestRequiredFuel(t *testing.T) {
 }
 
 func TestRequiredFuelRecursive(t *testing.T) {
-	tests := [] struct {
+	tests := []struct {
 		mass int
 		fuel int
 	}{
