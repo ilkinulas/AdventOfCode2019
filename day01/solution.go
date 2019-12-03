@@ -7,7 +7,7 @@ import (
 )
 
 func solve1() int {
-	f, _ := os.Open("input01.txt")
+	f, _ := os.Open("input.txt")
 	scanner := bufio.NewScanner(f)
 	sum := 0
 	for scanner.Scan() {
@@ -19,7 +19,7 @@ func solve1() int {
 }
 
 func solve2() int {
-	f, _ := os.Open("input01.txt")
+	f, _ := os.Open("input.txt")
 	scanner := bufio.NewScanner(f)
 	sum := 0
 	for scanner.Scan() {
