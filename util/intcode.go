@@ -14,6 +14,7 @@ var instructions = map[int]instruction{
 	6:  jumpIfFalse,
 	7:  lessThan,
 	8:  equals,
+	9:  relativeBaseOffset,
 	99: halt,
 }
 
@@ -26,6 +27,7 @@ var numberOfArguments = map[int]int{
 	6:  2,
 	7:  3,
 	8:  3,
+	9:  1,
 	99: 0,
 }
 
@@ -36,6 +38,8 @@ type Computer struct {
 	output         int
 	halted         bool
 	outputProduced bool
+	relativeBase   int
+	memory         map[int]int
 }
 
 func NewComputer(program []int, inputs []int) *Computer {
@@ -46,6 +50,8 @@ func NewComputer(program []int, inputs []int) *Computer {
 		output:         0,
 		halted:         false,
 		outputProduced: false,
+		relativeBase:   0,
+		memory:         make(map[int]int),
 	}
 }
 
@@ -110,6 +116,11 @@ func equals(c *Computer, args []arg) int {
 	return c.pc + 4
 }
 
+func relativeBaseOffset(c *Computer, args []arg) int {
+	c.relativeBase += args[0].value
+	return c.pc + 2
+}
+
 func halt(c *Computer, args []arg) int {
 	c.halted = true
 	return c.pc
@@ -127,7 +138,13 @@ func (c *Computer) Run() int {
 }
 
 func (c *Computer) Get(address int) int {
-	return c.program[address]
+	if address < len(c.program) {
+		return c.program[address]
+	}
+	if val, ok := c.memory[c.relativeBase]; ok {
+		return val
+	}
+	return 0
 }
 
 func (c *Computer) Output() int {
@@ -144,7 +161,11 @@ func (c *Computer) IsHalted() bool {
 }
 
 func (c *Computer) set(address, value int) {
-	c.program[address] = value
+	if address < len(c.program) {
+		c.program[address] = value
+	} else {
+		c.memory[address] = value
+	}
 }
 
 func (c *Computer) getInput() int {
@@ -152,10 +173,6 @@ func (c *Computer) getInput() int {
 	var val int
 	val, c.inputs = c.inputs[len(c.inputs)-1], c.inputs[:len(c.inputs)-1]
 	return val
-}
-
-func (c *Computer) SILBUNU() []int {
-	return c.inputs
 }
 
 func (c *Computer) parseInstruction(numArgs int) []arg {
@@ -170,12 +187,25 @@ func (c *Computer) parseInstruction(numArgs int) []arg {
 	var args [] arg
 	for i := 0; i < numberOfArguments[inst]; i++ {
 		val := c.program[c.pc+i+1]
-		if modes[i:i+1] == "1" {
-			//immediate mode
+		switch modes[i : i+1] {
+		case "0":
+			args = append(args, arg{address: val, value: c.readAddress(val)})
+		case "1":
 			args = append(args, arg{address: val, value: val})
-		} else {
-			args = append(args, arg{address: val, value: c.program[val]})
+		case "2":
+			val += c.relativeBase
+			args = append(args, arg{address: val, value: c.readAddress(val)})
 		}
 	}
 	return args
+}
+
+func (c *Computer) readAddress(address int) int {
+	if address < len(c.program) {
+		return c.program[address]
+	}
+	if val, ok := c.memory[address]; ok {
+		return val
+	}
+	return 0
 }
